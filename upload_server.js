@@ -8,16 +8,12 @@ var fs = Npm.require('fs');
 var _existsSync = fs.existsSync || path.existsSync;
 var imageMagick = Npm.require('imagemagick');
 
-
-var route = '/upload';
-
-
 var  options = {
-  tmpDir: '/Users/tomi/Documents/Uploads/tmp',
-  publicDir: process.env.PWD + '/public',
-  //uploadDir: __dirname + '/public/files',
-  uploadDir: '/Users/tomi/Documents/Uploads',
-  uploadUrl: '/files/',
+  /** @type String*/
+  tmpDir: null,
+  /** @type String*/
+  uploadDir: null,
+  uploadUrl: '/upload/',
   maxPostSize: 11000000000, // 11 GB
   minFileSize: 1,
   maxFileSize: 10000000000, // 10 GB
@@ -32,6 +28,8 @@ var  options = {
       height: 200
     }
   },
+  getDirectory: function(file, formData) { return "" },
+  getFileName: function(file, formData) { return file; },
   accessControl: {
     allowOrigin: '*',
     allowMethods: 'OPTIONS, HEAD, GET, POST, PUT, DELETE',
@@ -47,7 +45,35 @@ var  options = {
 
 
 UploadServer = {
+  init: function(opts) {
+    if (opts.tmpDir == null) {
+      throw new Meteor.Error('Temporary directory needs to be assigned!');
+    } else {
+      options.tmpDir = opts.tmpDir;
+    }
+
+    if (opts.uploadDir == null) {
+      throw new Meteor.Error('Upload directory needs to be assigned!');
+    } else {
+      options.uploadDir = opts.uploadDir;
+    }
+
+    if (opts.maxPostSize != null) options.maxPostSize = opts.maxPostSize;
+    if (opts.minFileSize != null) options.minFileSize = opts.maxPostSize;
+    if (opts.maxFileSize != null) options.maxFileSize = opts.maxFileSize;
+    if (opts.acceptFileTypes != null) options.acceptFileTypes = opts.acceptFileTypes;
+    if (opts.imageTypes != null) options.imageTypes = opts.imageTypes;
+    if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
+    if (opts.getFileName != null) options.getFileName = opts.getFileName;
+
+    if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
+    else options.imageVersions = [];
+  },
   serve: function (req, res) {
+    if (options.tmpDir == null || options.uploadDir == null) {
+      throw new Meteor.Error('Upload component not initialised!');
+    }
+
     res.setHeader(
       'Access-Control-Allow-Origin',
       options.accessControl.allowOrigin
@@ -92,7 +118,7 @@ UploadServer = {
       case 'GET':
         setNoCacheHeaders();
         // TODO: Make safe url
-        connect.static('/Users/tomi/Documents/Uploads/')(req, res);
+        connect.static(options.uploadDir)(req, res);
         break;
       case 'POST':
         setNoCacheHeaders();
@@ -216,11 +242,11 @@ UploadHandler.prototype.post = function () {
     if (name === 'redirect') {
       redirect = value;
     }
+    // remember all the form fields
     if (this.formFields == null) {
       this.formFields = {};
     }
     this.formFields[name] = value;
-
   }).on('file', function (name, file) {
     var fileInfo = map[path.basename(file.path)];
     fileInfo.size = file.size;
@@ -229,27 +255,20 @@ UploadHandler.prototype.post = function () {
       return;
     }
 
-    //var folder = this.formFields['folder'];
-    //var fileName = this.formFields['fileName'];
-    //
-    //// check if directory exists
-    //var subFolders = folder.split('/');
+    var folder = options.getDirectory(fileInfo.name, this.formFields);
+    // check if directory exists, if not, create all the directories
+    var subFolders = folder.split('/');
     var currentFolder = options.uploadDir;
-    //for (var i = 0; i < subFolders.length; i++) {
-    //  currentFolder += '/' + subFolders[i];
-    //
-    //  if (!fs.existsSync(currentFolder)) {
-    //    fs.mkdir(currentFolder);
-    //  }
-    //}
-    //var newFileName = fileName;
-    var newFileName = fileInfo.name;
+    for (var i = 0; i < subFolders.length; i++) {
+      currentFolder += '/' + subFolders[i];
 
-
-    // move the file to directory
-    while (!fs.existsSync(file.path) || !fs.existsSync(currentFolder)) {
-      console.log('Sleeping');
+      if (!fs.existsSync(currentFolder)) {
+        fs.mkdirSync(currentFolder);
+      }
     }
+
+    // possibly rename file if needed;
+    var newFileName = options.getFileName(fileInfo.name, this.formFields);
 
     fs.renameSync(file.path, currentFolder + "/" + newFileName);
 
@@ -302,7 +321,8 @@ UploadHandler.prototype.destroy = function () {
   handler.callback({success: false});
 };
 
+// declare routes
 
-RoutePolicy.declare(route, 'network');
-WebApp.connectHandlers.use(route, UploadServer.serve);
+RoutePolicy.declare(options.uploadUrl, 'network');
+WebApp.connectHandlers.use(options.uploadUrl, UploadServer.serve);
 

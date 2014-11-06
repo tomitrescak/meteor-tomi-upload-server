@@ -30,6 +30,7 @@ var  options = {
   },
   getDirectory: function(file, formData) { return "" },
   getFileName: function(file, formData) { return file; },
+  finished: function() {},
   accessControl: {
     allowOrigin: '*',
     allowMethods: 'OPTIONS, HEAD, GET, POST, PUT, DELETE',
@@ -65,6 +66,7 @@ UploadServer = {
     if (opts.imageTypes != null) options.imageTypes = opts.imageTypes;
     if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
+    if (opts.finished != null) options.finished = opts.finished;
 
     if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
     else options.imageVersions = [];
@@ -290,6 +292,9 @@ UploadHandler.prototype.post = function () {
         }, finish);
       });
     }
+
+    // call the feedback
+    options.finished(newFileName, folder, this.formFields);
   }).on('aborted', function () {
     tmpFiles.forEach(function (file) {
       fs.unlink(file);

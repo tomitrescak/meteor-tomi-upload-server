@@ -1,14 +1,14 @@
 Package.describe({
   name: 'tomi:upload-server',
   summary: 'Upload server for Meteor. Allows to save and serve files from arbitrary directory',
-  version: '1.0.0',
+  version: '1.0.1',
   git: 'https://github.com/tomitrescak/meteor-tomi-upload-server.git'
 });
 
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use('iron:router');
+  api.use('iron:router@1.0.3');
   api.use(['webapp', 'routepolicy'], 'server');
 
   api.addFiles('upload_server.js', ['server']);
@@ -18,11 +18,11 @@ Package.onUse(function(api) {
   api.export('UploadServer', 'server');
 });
 
-Package.onTest(function(api) {
-  api.use('tinytest');
-  api.use('tomi:upload-server');
-  api.addFiles('upload-server-tests.js');
-});
+//Package.onTest(function(api) {
+//  api.use('tinytest');
+//  api.use('tomi:upload-server');
+//  api.addFiles('upload-server-tests.js');
+//});
 
 Npm.depends({
   formidable: '1.0.15',

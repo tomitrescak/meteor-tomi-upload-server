@@ -68,6 +68,8 @@ UploadServer = {
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
     if (opts.finished != null) options.finished = opts.finished;
 
+    if (opts.uploadUrl) options.uploadUrl = opts.uploadUrl;
+
     if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
     else options.imageVersions = [];
   },
@@ -112,6 +114,7 @@ UploadServer = {
         res.setHeader('Content-Disposition', 'inline; filename="files.json"');
       },
       handler = new UploadHandler(req, res, handleResult);
+
     switch (req.method) {
       case 'OPTIONS':
         res.end();
@@ -127,7 +130,7 @@ UploadServer = {
         handler.post();
         break;
       case 'DELETE':
-        handler.destroy();
+        //handler.destroy();
         break;
       default:
         res.statusCode = 405;
@@ -179,12 +182,13 @@ FileInfo.prototype.safeName = function () {
   }
 };
 
-FileInfo.prototype.initUrls = function (req) {
+FileInfo.prototype.initUrls = function (req, form) {
   if (!this.error) {
     var that = this,
+      subDirectory = options.getDirectory(this.name, form.formFields),
       baseUrl = (options.ssl ? 'https:' : 'http:') +
         '//' + req.headers.host + options.uploadUrl;
-    this.url = this.deleteUrl = baseUrl + encodeURIComponent(this.name);
+    this.url = this.deleteUrl = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);
     Object.keys(options.imageVersions).forEach(function (version) {
       if (_existsSync(
           options.uploadDir + '/' + version + '/' + that.name
@@ -228,7 +232,7 @@ UploadHandler.prototype.post = function () {
       counter -= 1;
       if (!counter) {
         files.forEach(function (fileInfo) {
-          fileInfo.initUrls(handler.req);
+          fileInfo.initUrls(handler.req, form);
         });
         handler.callback({files: files}, redirect);
       }

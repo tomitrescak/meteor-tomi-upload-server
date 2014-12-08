@@ -129,9 +129,9 @@ UploadServer = {
         setNoCacheHeaders();
         handler.post();
         break;
-      case 'DELETE':
-        //handler.destroy();
-        break;
+      //case 'DELETE':
+      //  handler.destroy();
+      //  break;
       default:
         res.statusCode = 405;
         res.end();
@@ -153,7 +153,6 @@ var FileInfo = function (file) {
     this.name = file.name;
     this.size = file.size;
     this.type = file.type;
-    this.deleteType = 'DELETE';
   };
 
 var UploadHandler = function (req, res, callback) {
@@ -188,7 +187,7 @@ FileInfo.prototype.initUrls = function (req, form) {
       subDirectory = options.getDirectory(this.name, form.formFields),
       baseUrl = (options.ssl ? 'https:' : 'http:') +
         '//' + req.headers.host + options.uploadUrl;
-    this.url = this.deleteUrl = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);
+    this.url = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);
     Object.keys(options.imageVersions).forEach(function (version) {
       if (_existsSync(
           options.uploadDir + '/' + version + '/' + that.name
@@ -198,26 +197,6 @@ FileInfo.prototype.initUrls = function (req, form) {
       }
     });
   }
-};
-
-UploadHandler.prototype.get = function () {
-  var handler = this,
-    files = [];
-  fs.readdir(options.uploadDir, function (err, list) {
-    list.forEach(function (name) {
-      var stats = fs.statSync(options.uploadDir + '/' + name),
-        fileInfo;
-      if (stats.isFile() && name[0] !== '.') {
-        fileInfo = new FileInfo({
-          name: name,
-          size: stats.size
-        });
-        fileInfo.initUrls(handler.req);
-        files.push(fileInfo);
-      }
-    });
-    handler.callback({files: files});
-  });
 };
 
 UploadHandler.prototype.post = function () {
@@ -261,6 +240,7 @@ UploadHandler.prototype.post = function () {
       return;
     }
 
+    // we can store files in subdirectories
     var folder = options.getDirectory(fileInfo.name, this.formFields);
     // check if directory exists, if not, create all the directories
     var subFolders = folder.split('/');
@@ -275,6 +255,9 @@ UploadHandler.prototype.post = function () {
 
     // possibly rename file if needed;
     var newFileName = options.getFileName(fileInfo.name, this.formFields);
+
+    // set the file name
+    fileInfo.path = folder + "/" + newFileName;
 
     fs.renameSync(file.path, currentFolder + "/" + newFileName);
 

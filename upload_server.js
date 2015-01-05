@@ -4,6 +4,7 @@ var sys = Npm.require('sys');
 var connect = Npm.require('connect');
 var path = Npm.require('path');
 var fs = Npm.require('fs');
+var Fiber = Npm.require('fibers');
 
 var _existsSync = fs.existsSync || path.existsSync;
 var imageMagick = Npm.require('imagemagick');
@@ -231,6 +232,7 @@ UploadHandler.prototype.post = function () {
     if (this.formFields == null) {
       this.formFields = {};
     }
+  //  console.log('Form field: ' + name + "-" + value);
     this.formFields[name] = value;
   }).on('file', function (name, file) {
     var fileInfo = map[path.basename(file.path)];
@@ -280,8 +282,12 @@ UploadHandler.prototype.post = function () {
       });
     }
 
-    // call the feedback
-    options.finished(newFileName, folder, this.formFields);
+    // call the feedback within its own fiber
+    var formFields = this.formFields;
+    Fiber(function() {
+      options.finished(newFileName, folder, formFields);
+    }).run();
+
   }).on('aborted', function () {
     tmpFiles.forEach(function (file) {
       fs.unlink(file);

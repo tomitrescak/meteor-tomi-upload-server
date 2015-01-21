@@ -15,6 +15,7 @@ var  options = {
   /** @type String*/
   uploadDir: null,
   uploadUrl: '/upload/',
+  checkCreateDirectories: false,
   maxPostSize: 11000000000, // 11 GB
   minFileSize: 1,
   maxFileSize: 10000000000, // 10 GB
@@ -48,16 +49,26 @@ var  options = {
 
 UploadServer = {
   init: function(opts) {
+    if (opts.checkCreateDirectories != null) options.checkCreateDirectories = opts.checkCreateDirectories;
+
     if (opts.tmpDir == null) {
       throw new Meteor.Error('Temporary directory needs to be assigned!');
     } else {
       options.tmpDir = opts.tmpDir;
     }
 
+    if (options.checkCreateDirectories) {
+      checkCreateDirectory(options.tmpDir);
+    }
+
     if (opts.uploadDir == null) {
       throw new Meteor.Error('Upload directory needs to be assigned!');
     } else {
       options.uploadDir = opts.uploadDir;
+    }
+
+    if (options.checkCreateDirectories) {
+      checkCreateDirectory(options.uploadDir);
     }
 
     if (opts.maxPostSize != null) options.maxPostSize = opts.maxPostSize;
@@ -73,6 +84,9 @@ UploadServer = {
 
     if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
     else options.imageVersions = [];
+  },
+  delete: function(path) {
+    fs.unlinkSync(options.uploadDir + path);
   },
   serve: function (req, res) {
     if (options.tmpDir == null || options.uploadDir == null) {
@@ -238,7 +252,7 @@ UploadHandler.prototype.post = function () {
     var fileInfo = map[path.basename(file.path)];
     fileInfo.size = file.size;
     if (!fileInfo.validate()) {
-      fs.unlink(file.path);
+      fs.unlinkSync(file.path);
       return;
     }
 
@@ -259,6 +273,7 @@ UploadHandler.prototype.post = function () {
     var newFileName = options.getFileName(fileInfo.name, this.formFields);
 
     // set the file name
+    fileInfo.name = newFileName;
     fileInfo.path = folder + "/" + newFileName;
 
     fs.renameSync(file.path, currentFolder + "/" + newFileName);
@@ -318,6 +333,30 @@ UploadHandler.prototype.destroy = function () {
   }
   handler.callback({success: false});
 };
+
+// create directories
+
+var checkCreateDirectory = function(dir) {
+  if (!dir) {
+    return;
+  }
+
+  var dirParts = dir.split('/');
+  var currentDir = '/';
+
+  for (var i=0; i<dirParts.length; i++) {
+    if (!dirParts[i]) {
+      continue;
+    }
+
+    currentDir += dirParts[i] + '/';
+
+    if (!fs.existsSync(currentDir)) {
+      fs.mkdirSync(currentDir);
+      console.log('Created directory: ' + currentDir);
+    }
+  }
+}
 
 // declare routes
 

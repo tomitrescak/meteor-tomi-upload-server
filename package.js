@@ -1,6 +1,6 @@
 Package.describe({
   name: 'tomi:upload-server',
-  summary: 'Upload server for Meteor. Allows to save and serve files from arbitrary directory',
+  summary: 'Upload server for Meteor. Allows to save and serve files from arbitrary directory (Breaking changes from 1.0.3)',
   version: '1.1.0',
   git: 'https://github.com/tomitrescak/meteor-tomi-upload-server.git'
 });

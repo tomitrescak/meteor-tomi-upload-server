@@ -257,7 +257,7 @@ UploadHandler.prototype.post = function () {
     }
 
     // we can store files in subdirectories
-    var folder = options.getDirectory(fileInfo.name, this.formFields);
+    var folder = options.getDirectory(fileInfo, this.formFields);
     // check if directory exists, if not, create all the directories
     var subFolders = folder.split('/');
     var currentFolder = options.uploadDir;
@@ -270,7 +270,7 @@ UploadHandler.prototype.post = function () {
     }
 
     // possibly rename file if needed;
-    var newFileName = options.getFileName(fileInfo.name, this.formFields);
+    var newFileName = options.getFileName(fileInfo, this.formFields);
 
     // set the file name
     fileInfo.name = newFileName;
@@ -300,7 +300,7 @@ UploadHandler.prototype.post = function () {
     // call the feedback within its own fiber
     var formFields = this.formFields;
     Fiber(function() {
-      options.finished(newFileName, folder, formFields);
+      options.finished(fileInfo, formFields);
     }).run();
 
   }).on('aborted', function () {

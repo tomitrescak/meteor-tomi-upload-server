@@ -30,8 +30,8 @@ var  options = {
       height: 200
     }
   },
-  getDirectory: function(file, formData) { return "" },
-  getFileName: function(file, formData) { return file; },
+  getDirectory: function(fileInfo, formData) { return "" },
+  getFileName: function(fileInfo, formData) { return fileInfo.name; },
   finished: function() {},
   accessControl: {
     allowOrigin: '*',

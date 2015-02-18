@@ -85,8 +85,10 @@ UploadServer = {
     if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
     else options.imageVersions = [];
   },
-  delete: function(path) {
-    fs.unlinkSync(options.uploadDir + path);
+  delete: function(filePath) {
+
+    // make sure paths are correct
+    fs.unlinkSync(path.join(options.uploadDir, filePath));
   },
   serve: function (req, res) {
     if (options.tmpDir == null || options.uploadDir == null) {

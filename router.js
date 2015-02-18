@@ -8,12 +8,12 @@
 //}, { where: 'server' });
 
 
-Router.map(function () {
-  this.route('upload', {
-    path: '/upload/(.*)',
-    where: 'server',
-    action: function() {
-      UploadServer.serve(this.request, this.response);
-    }
-  });
-});
+//Router.map(function () {
+//  this.route('upload', {
+//    path: '/upload/(.*)',
+//    where: 'server',
+//    action: function() {
+//      UploadServer.serve(this.request, this.response);
+//    }
+//  });
+//});

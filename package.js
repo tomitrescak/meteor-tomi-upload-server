@@ -1,14 +1,14 @@
 Package.describe({
   name: 'tomi:upload-server',
   summary: 'Upload server for Meteor. Allows to save and serve files (Breaking changes from 1.0.3)',
-  version: '1.1.1',
+  version: '1.1.2',
   git: 'https://github.com/tomitrescak/meteor-tomi-upload-server.git'
 });
 
 Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
-  api.use('iron:router@1.0.3');
+//  api.use('iron:router@1.0.3');
   api.use(['webapp', 'routepolicy'], 'server');
 
   api.addFiles('upload_server.js', ['server']);

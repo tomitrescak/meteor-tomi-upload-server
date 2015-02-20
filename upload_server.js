@@ -1,7 +1,8 @@
 var formidable = Npm.require('formidable');
 var http = Npm.require('http');
 var sys = Npm.require('sys');
-var connect = Npm.require('connect');
+//var connect = Npm.require('connect');
+var url = Npm.require('url');
 var path = Npm.require('path');
 var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
@@ -30,6 +31,7 @@ var  options = {
       height: 200
     }
   },
+  noCache: false,
   getDirectory: function(fileInfo, formData) { return "" },
   getFileName: function(fileInfo, formData) { return fileInfo.name; },
   finished: function() {},
@@ -37,6 +39,20 @@ var  options = {
     allowOrigin: '*',
     allowMethods: 'OPTIONS, HEAD, GET, POST, PUT, DELETE',
     allowHeaders: 'Content-Type, Content-Range, Content-Disposition'
+  },
+  mimeTypes: {
+    "html": "text/html",
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "png": "image/png",
+    "gif": "image/gif",
+    "js": "text/javascript",
+    "css": "text/css",
+    "pdf": "application/pdf",
+    "doc": "application/msword",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "zip": "application/zip, application/x-compressed-zip",
+    "txt": "text/plain"
   }
   /* Uncomment and edit this section to provide the service via HTTPS:
    ssl: {
@@ -117,18 +133,18 @@ UploadServer = {
           });
           res.end();
         } else {
-          res.writeHead(200, {
-            'Content-Type': req.headers.accept
-              .indexOf('application/json') !== -1 ?
-              'application/json' : 'text/plain'
-          });
+          //res.writeHead(200, {
+          //  'Content-Type': req.headers.accept
+          //    .indexOf('application/json') !== -1 ?
+          //    'application/json' : 'text/plain'
+          //});
           res.end(JSON.stringify(result));
         }
       },
       setNoCacheHeaders = function () {
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-        res.setHeader('Content-Disposition', 'inline; filename="files.json"');
+        // res.setHeader('Content-Disposition', 'inline; filename="files.json"');
       },
       handler = new UploadHandler(req, res, handleResult);
 
@@ -138,12 +154,50 @@ UploadServer = {
         break;
       case 'HEAD':
       case 'GET':
-        setNoCacheHeaders();
-        // TODO: Make safe url
-        connect.static(options.uploadDir)(req, res);
+        if (options.noCache) {
+          setNoCacheHeaders();
+        }
+
+        var uri = url.parse(req.url).pathname;
+        var filename = path.join(options.uploadDir, unescape(uri));
+        var stats;
+
+        try {
+          stats = fs.lstatSync(filename); // throws if path doesn't exist
+        } catch (e) {
+          res.writeHead(404, {'Content-Type': 'text/plain'});
+          res.write('404 Not Found\n');
+          res.end();
+          return;
+        }
+
+        if (stats.isFile()) {
+          // path exists, is a file
+          var mimeType = options.mimeTypes[path.extname(filename).split(".").reverse()[0]];
+          if (!mimeType) {
+            mimeType = "application/octet-stream";
+          }
+          res.writeHead(200, {'Content-Type': mimeType} );
+
+          //connect.static(options.uploadDir)(req, res);
+          var fileStream = fs.createReadStream(filename);
+          fileStream.pipe(res);
+
+        } else if (stats.isDirectory()) {
+          // path exists, is a directory
+          res.writeHead(403, {'Content-Type': 'text/plain'});
+          res.write('Access denied');
+          res.end();
+        } else {
+          res.writeHead(500, {'Content-Type': 'text/plain'});
+          res.write('500 Internal server error\n');
+          res.end();
+        }
         break;
       case 'POST':
-        setNoCacheHeaders();
+        if (options.noCache) {
+          setNoCacheHeaders();
+        }
         handler.post();
         break;
       //case 'DELETE':
@@ -157,25 +211,25 @@ UploadServer = {
 }
 
 var utf8encode = function (str) {
-    return unescape(encodeURIComponent(str));
-  };
+  return unescape(encodeURIComponent(str));
+};
 
 var nameCountRegexp = /(?:(?: \(([\d]+)\))?(\.[^.]+))?$/;
 
 var nameCountFunc = function (s, index, ext) {
-    return ' (' + ((parseInt(index, 10) || 0) + 1) + ')' + (ext || '');
-  };
+  return ' (' + ((parseInt(index, 10) || 0) + 1) + ')' + (ext || '');
+};
 
 var FileInfo = function (file) {
-    this.name = file.name;
-    this.size = file.size;
-    this.type = file.type;
-  };
+  this.name = file.name;
+  this.size = file.size;
+  this.type = file.type;
+};
 
 var UploadHandler = function (req, res, callback) {
-    this.req = req;
-    this.res = res;
-    this.callback = callback;
+  this.req = req;
+  this.res = res;
+  this.callback = callback;
 };
 
 FileInfo.prototype.validate = function () {
@@ -248,7 +302,7 @@ UploadHandler.prototype.post = function () {
     if (this.formFields == null) {
       this.formFields = {};
     }
-  //  console.log('Form field: ' + name + "-" + value);
+    //  console.log('Form field: ' + name + "-" + value);
     this.formFields[name] = value;
   }).on('file', function (name, file) {
     var fileInfo = map[path.basename(file.path)];

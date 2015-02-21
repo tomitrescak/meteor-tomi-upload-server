@@ -31,7 +31,7 @@ var  options = {
       height: 200
     }
   },
-  noCache: false,
+  cacheTime: 86400,
   getDirectory: function(fileInfo, formData) { return "" },
   getFileName: function(fileInfo, formData) { return fileInfo.name; },
   finished: function() {},
@@ -71,6 +71,16 @@ UploadServer = {
       throw new Meteor.Error('Temporary directory needs to be assigned!');
     } else {
       options.tmpDir = opts.tmpDir;
+    }
+
+    if (opts.cacheTime) {
+      options.cacheTime = opts.cacheTime;
+    }
+
+    if (opts.mimeTypes != null) {
+      for (var key in opts.mimeTypes) {
+        options.mimeTypes[key] = opts.mimeTypes[key];
+      }
     }
 
     if (options.checkCreateDirectories) {
@@ -142,9 +152,13 @@ UploadServer = {
         }
       },
       setNoCacheHeaders = function () {
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-        // res.setHeader('Content-Disposition', 'inline; filename="files.json"');
+        if (options.cacheTime) {
+          res.setHeader('Cache-Control', 'public, max-age=' + options.cacheTime);
+        } else {
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+          // res.setHeader('Content-Disposition', 'inline; filename="files.json"');
+        }
       },
       handler = new UploadHandler(req, res, handleResult);
 
@@ -154,9 +168,7 @@ UploadServer = {
         break;
       case 'HEAD':
       case 'GET':
-        if (options.noCache) {
-          setNoCacheHeaders();
-        }
+        setNoCacheHeaders();
 
         var uri = url.parse(req.url).pathname;
         var filename = path.join(options.uploadDir, unescape(uri));
@@ -195,9 +207,7 @@ UploadServer = {
         }
         break;
       case 'POST':
-        if (options.noCache) {
-          setNoCacheHeaders();
-        }
+        setNoCacheHeaders();
         handler.post();
         break;
       //case 'DELETE':

@@ -35,6 +35,8 @@ var  options = {
   getDirectory: function(fileInfo, formData) { return "" },
   getFileName: function(fileInfo, formData) { return fileInfo.name; },
   finished: function() {},
+  validateRequest: function() { return null; },
+  validateFile: function() { return null; },
   accessControl: {
     allowOrigin: '*',
     allowMethods: 'OPTIONS, HEAD, GET, POST, PUT, DELETE',
@@ -83,7 +85,7 @@ UploadServer = {
       }
     }
 
-    if (options.checkCreateDirectories) {
+    if (opts.checkCreateDirectories) {
       checkCreateDirectory(options.tmpDir);
     }
 
@@ -102,6 +104,8 @@ UploadServer = {
     if (opts.maxFileSize != null) options.maxFileSize = opts.maxFileSize;
     if (opts.acceptFileTypes != null) options.acceptFileTypes = opts.acceptFileTypes;
     if (opts.imageTypes != null) options.imageTypes = opts.imageTypes;
+    if (opts.validateRequest != null) options.validateRequest = opts.validateRequest;
+    if (opts.validateFile != null) options.validateFile = opts.validateFile;
     if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
     if (opts.finished != null) options.finished = opts.finished;
@@ -141,6 +145,10 @@ UploadServer = {
               encodeURIComponent(JSON.stringify(result))
             )
           });
+          res.end();
+        } else if (result.error) {
+          res.writeHead(403, {'Content-Type': 'text/plain'});
+          res.write(result.error);
           res.end();
         } else {
           //res.writeHead(200, {
@@ -207,6 +215,15 @@ UploadServer = {
         }
         break;
       case 'POST':
+        // validate post
+        var error = options.validateRequest(req, res);
+        if (error) {
+          res.writeHead(403, {'Content-Type': 'text/plain'});
+          res.write(error);
+          res.end();
+          return;
+        }
+
         setNoCacheHeaders();
         handler.post();
         break;
@@ -243,6 +260,7 @@ var UploadHandler = function (req, res, callback) {
 };
 
 FileInfo.prototype.validate = function () {
+  this.error = null;
   if (options.minFileSize && options.minFileSize > this.size) {
     this.error = 'File is too small';
   } else if (options.maxFileSize && options.maxFileSize < this.size) {
@@ -250,7 +268,7 @@ FileInfo.prototype.validate = function () {
   } else if (!options.acceptFileTypes.test(this.name)) {
     this.error = 'Filetype not allowed';
   }
-  return !this.error;
+  return this.error;
 };
 
 FileInfo.prototype.safeName = function () {
@@ -302,6 +320,16 @@ UploadHandler.prototype.post = function () {
     tmpFiles.push(file.path);
     var fileInfo = new FileInfo(file, handler.req, true);
     fileInfo.safeName();
+
+    // validate post
+    var error = options.validateFile(file);
+    if (error) {
+      res.writeHead(403, {'Content-Type': 'text/plain'});
+      res.write(error);
+      res.end();
+      return;
+    }
+
     map[path.basename(file.path)] = fileInfo;
     files.push(fileInfo);
   }).on('field', function (name, value) {
@@ -317,8 +345,13 @@ UploadHandler.prototype.post = function () {
   }).on('file', function (name, file) {
     var fileInfo = map[path.basename(file.path)];
     fileInfo.size = file.size;
-    if (!fileInfo.validate()) {
+
+    var error = fileInfo.validate();
+    if (error) {
+      // delete file
       fs.unlinkSync(file.path);
+      // callback with error
+      handler.callback({error: error});
       return;
     }
 

@@ -283,7 +283,7 @@ FileInfo.prototype.safeName = function () {
 FileInfo.prototype.initUrls = function (req, form) {
   if (!this.error) {
     var that = this,
-      subDirectory = options.getDirectory(this.name, form.formFields),
+      subDirectory = options.getDirectory(that, form.formFields),
       baseUrl = (options.ssl ? 'https:' : 'http:') +
         '//' + req.headers.host + options.uploadUrl;
     this.url = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);
@@ -461,4 +461,3 @@ var checkCreateDirectory = function(dir) {
 
 RoutePolicy.declare(options.uploadUrl, 'network');
 WebApp.connectHandlers.use(options.uploadUrl, UploadServer.serve);
-

@@ -10,7 +10,7 @@ var Fiber = Npm.require('fibers');
 var _existsSync = fs.existsSync || path.existsSync;
 var imageMagick = Npm.require('imagemagick');
 
-var  options = {
+var options = {
   /** @type String*/
   tmpDir: null,
   /** @type String*/
@@ -32,11 +32,20 @@ var  options = {
     }
   },
   cacheTime: 86400,
-  getDirectory: function(fileInfo, formData) { return "" },
-  getFileName: function(fileInfo, formData) { return fileInfo.name; },
-  finished: function() {},
-  validateRequest: function() { return null; },
-  validateFile: function() { return null; },
+  getDirectory: function (fileInfo, formData) {
+    return ""
+  },
+  getFileName: function (fileInfo, formData) {
+    return fileInfo.name;
+  },
+  finished: function () {
+  },
+  validateRequest: function () {
+    return null;
+  },
+  validateFile: function () {
+    return null;
+  },
   accessControl: {
     allowOrigin: '*',
     allowMethods: 'OPTIONS, HEAD, GET, POST, PUT, DELETE',
@@ -66,7 +75,7 @@ var  options = {
 
 
 UploadServer = {
-  init: function(opts) {
+  init: function (opts) {
     if (opts.checkCreateDirectories != null) options.checkCreateDirectories = opts.checkCreateDirectories;
 
     if (opts.tmpDir == null) {
@@ -115,7 +124,7 @@ UploadServer = {
     if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
     else options.imageVersions = [];
   },
-  delete: function(filePath) {
+  delete: function (filePath) {
 
     // make sure paths are correct
     fs.unlinkSync(path.join(options.uploadDir, filePath));
@@ -170,6 +179,16 @@ UploadServer = {
       },
       handler = new UploadHandler(req, res, handleResult);
 
+
+    // validate the request
+    var error = options.validateRequest(req, res);
+    if (error) {
+      res.writeHead(403, {'Content-Type': 'text/plain'});
+      res.write(error);
+      res.end();
+      return;
+    }
+
     switch (req.method) {
       case 'OPTIONS':
         res.end();
@@ -197,7 +216,7 @@ UploadServer = {
           if (!mimeType) {
             mimeType = "application/octet-stream";
           }
-          res.writeHead(200, {'Content-Type': mimeType} );
+          res.writeHead(200, {'Content-Type': mimeType});
 
           //connect.static(options.uploadDir)(req, res);
           var fileStream = fs.createReadStream(filename);
@@ -216,14 +235,6 @@ UploadServer = {
         break;
       case 'POST':
         // validate post
-        var error = options.validateRequest(req, res);
-        if (error) {
-          res.writeHead(403, {'Content-Type': 'text/plain'});
-          res.write(error);
-          res.end();
-          return;
-        }
-
         setNoCacheHeaders();
         handler.post();
         break;
@@ -398,7 +409,7 @@ UploadHandler.prototype.post = function () {
 
     // call the feedback within its own fiber
     var formFields = this.formFields;
-    Fiber(function() {
+    Fiber(function () {
       options.finished(fileInfo, formFields);
     }).run();
 
@@ -407,6 +418,7 @@ UploadHandler.prototype.post = function () {
       fs.unlink(file);
     });
   }).on('error', function (e) {
+    console.log('ERROR');
     console.log(e);
   }).on('progress', function (bytesReceived, bytesExpected) {
     if (bytesReceived > options.maxPostSize) {
@@ -435,7 +447,7 @@ UploadHandler.prototype.destroy = function () {
 
 // create directories
 
-var checkCreateDirectory = function(dir) {
+var checkCreateDirectory = function (dir) {
   if (!dir) {
     return;
   }
@@ -443,7 +455,7 @@ var checkCreateDirectory = function(dir) {
   var dirParts = dir.split('/');
   var currentDir = '/';
 
-  for (var i=0; i<dirParts.length; i++) {
+  for (var i = 0; i < dirParts.length; i++) {
     if (!dirParts[i]) {
       continue;
     }

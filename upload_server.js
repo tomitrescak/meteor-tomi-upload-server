@@ -208,22 +208,16 @@ UploadServer = {
           stats = fs.lstatSync(filename); // throws if path doesn't exist
         } catch (e) {
           
-          console.log('options.notFoundImage');
-          console.log(options.notFoundImage);
-          
           if (options.notFoundImage) {    
             filename = path.join(options.uploadDir, options.notFoundImage);
-            console.log(filename)
             
             try {
               stats = fs.lstatSync(filename);
               
             } catch (e) {
-              console.log('couldnt open 404 image' );
               exitWith404 = true;
             } 
           }else {
-            console.log('no 404 image set, writing 404 string');
             exitWith404 = true;
           }
           

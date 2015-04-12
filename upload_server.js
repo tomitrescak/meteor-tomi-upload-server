@@ -110,7 +110,7 @@ UploadServer = {
     }
 
     if (opts.maxPostSize != null) options.maxPostSize = opts.maxPostSize;
-    if (opts.minFileSize != null) options.minFileSize = opts.maxPostSize;
+    if (opts.minFileSize != null) options.minFileSize = opts.minFileSize;
     if (opts.maxFileSize != null) options.maxFileSize = opts.maxFileSize;
     if (opts.acceptFileTypes != null) options.acceptFileTypes = opts.acceptFileTypes;
     if (opts.imageTypes != null) options.imageTypes = opts.imageTypes;

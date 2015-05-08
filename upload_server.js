@@ -64,7 +64,8 @@ var options = {
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "zip": "application/zip, application/x-compressed-zip",
     "txt": "text/plain"
-  }
+  },
+  notFoundImage: null
   /* Uncomment and edit this section to provide the service via HTTPS:
    ssl: {
    key: fs.readFileSync('/Applications/XAMPP/etc/ssl.key/server.key'),
@@ -109,7 +110,7 @@ UploadServer = {
     }
 
     if (opts.maxPostSize != null) options.maxPostSize = opts.maxPostSize;
-    if (opts.minFileSize != null) options.minFileSize = opts.maxPostSize;
+    if (opts.minFileSize != null) options.minFileSize = opts.minFileSize;
     if (opts.maxFileSize != null) options.maxFileSize = opts.maxFileSize;
     if (opts.acceptFileTypes != null) options.acceptFileTypes = opts.acceptFileTypes;
     if (opts.imageTypes != null) options.imageTypes = opts.imageTypes;
@@ -118,6 +119,7 @@ UploadServer = {
     if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
     if (opts.finished != null) options.finished = opts.finished;
+    if (opts.notFoundImage != null) options.notFoundImage = opts.notFoundImage;
 
     if (opts.uploadUrl) options.uploadUrl = opts.uploadUrl;
 
@@ -200,14 +202,33 @@ UploadServer = {
         var uri = url.parse(req.url).pathname;
         var filename = path.join(options.uploadDir, unescape(uri));
         var stats;
+        var exitWith404 = false;
 
         try {
           stats = fs.lstatSync(filename); // throws if path doesn't exist
         } catch (e) {
-          res.writeHead(404, {'Content-Type': 'text/plain'});
-          res.write('404 Not Found\n');
-          res.end();
-          return;
+          
+          if (options.notFoundImage) {    
+            filename = path.join(options.uploadDir, options.notFoundImage);
+            
+            try {
+              stats = fs.lstatSync(filename);
+              
+            } catch (e) {
+              exitWith404 = true;
+            } 
+          }else {
+            exitWith404 = true;
+          }
+          
+          if (exitWith404) {
+            res.writeHead(404, {'Content-Type': 'text/plain'});
+            res.write('404 Not Found\n');
+            res.end();
+        
+            return;
+          }
+            
         }
 
         if (stats.isFile()) {

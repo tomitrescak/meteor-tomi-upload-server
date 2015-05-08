@@ -398,11 +398,20 @@ UploadHandler.prototype.post = function () {
           fs.mkdirSync(currentFolder + '/' + version);
         }
 
+        // rename target file if format was specified
+        var resizedFileName;
+        if(opts.format) {
+          resizedFileName = newFileName.substr(0, 
+            newFileName.lastIndexOf('.') + 1) + opts.format;
+        } else {
+          resizedFileName = newFileName;
+        } 
+
         imageMagick.resize({
           width: opts.width,
           height: opts.height,
           srcPath: currentFolder + '/' + newFileName,
-          dstPath: currentFolder + '/' + version + '/' + newFileName
+          dstPath: currentFolder + '/' + version + '/' + resizedFileName
         }, finish);
       });
     }

@@ -431,7 +431,7 @@ UploadHandler.prototype.post = function () {
         imageMagick.resize({
           width: opts.width,
           height: opts.height,
-          srcPath: currentFolder + '/' + newFileName,
+          srcPath: currentFolder + '/' + newFileName + '[0]',
           dstPath: currentFolder + '/' + version + '/' + resizedFileName
         }, finish);
       });

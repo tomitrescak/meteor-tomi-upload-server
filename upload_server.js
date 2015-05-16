@@ -46,6 +46,30 @@ var options = {
   validateFile: function () {
     return null;
   },
+
+  processImage: function (fs, imageMagick, currentFolder, fileInfo, options, formData, counter, finish) {
+      if (options.imageTypes.test(fileInfo.name)) {
+        Object.keys(options.imageVersions).forEach(function (version) {
+          counter += 1;
+          var opts = options.imageVersions[version];
+
+          // check if version directory exists
+          if (!fs.existsSync(currentFolder + '/' + version)) {
+            fs.mkdirSync(currentFolder + '/' + version);
+          }
+
+          imageMagick.resize({
+            width: opts.width,
+            height: opts.height,
+            srcPath: currentFolder + '/' + fileInfo.name,
+            dstPath: currentFolder + '/' + version + '/' + fileInfo.name
+          }, finish);
+      });
+    }
+
+    return counter;
+  },
+
   accessControl: {
     allowOrigin: '*',
     allowMethods: 'OPTIONS, HEAD, GET, POST, PUT, DELETE',
@@ -119,6 +143,7 @@ UploadServer = {
     if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
     if (opts.finished != null) options.finished = opts.finished;
+    if (opts.processImage != null) options.processImage = opts.processImage;
     if (opts.notFoundImage != null) options.notFoundImage = opts.notFoundImage;
 
     if (opts.uploadUrl) options.uploadUrl = opts.uploadUrl;
@@ -409,23 +434,8 @@ UploadHandler.prototype.post = function () {
 
     fs.renameSync(file.path, currentFolder + "/" + newFileName);
 
-    if (options.imageTypes.test(fileInfo.name)) {
-      Object.keys(options.imageVersions).forEach(function (version) {
-        counter += 1;
-        var opts = options.imageVersions[version];
-
-        // check if version directory exists
-        if (!fs.existsSync(currentFolder + '/' + version)) {
-          fs.mkdirSync(currentFolder + '/' + version);
-        }
-
-        imageMagick.resize({
-          width: opts.width,
-          height: opts.height,
-          srcPath: currentFolder + '/' + newFileName,
-          dstPath: currentFolder + '/' + version + '/' + newFileName
-        }, finish);
-      });
+    if (options.processImage) {
+      counter = options.processImage(fs, imageMagick, currentFolder, fileInfo, options, this.formFields, counter, finish);
     }
 
     // call the feedback within its own fiber

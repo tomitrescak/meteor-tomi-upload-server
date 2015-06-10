@@ -258,16 +258,14 @@ var nameCountFunc = function (s, index, ext) {
   return ' (' + ((parseInt(index, 10) || 0) + 1) + ')' + (ext || '');
 };
 
+/**
+ * @class FileInfo Manages paths for uploaded objects
+ */
 var FileInfo = function (file) {
   this.name = file.name;
+  this.path = file.name;
   this.size = file.size;
   this.type = file.type;
-};
-
-var UploadHandler = function (req, res, callback) {
-  this.req = req;
-  this.res = res;
-  this.callback = callback;
 };
 
 FileInfo.prototype.validate = function () {
@@ -298,6 +296,8 @@ FileInfo.prototype.initUrls = function (req, form) {
       baseUrl = (options.ssl ? 'https:' : 'http:') +
         '//' + req.headers.host + options.uploadUrl;
     this.url = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);
+
+    // image
     Object.keys(options.imageVersions).forEach(function (version) {
       if (_existsSync(
           options.uploadDir + '/' + version + '/' + that.name
@@ -307,6 +307,12 @@ FileInfo.prototype.initUrls = function (req, form) {
       }
     });
   }
+};
+
+var UploadHandler = function (req, res, callback) {
+  this.req = req;
+  this.res = res;
+  this.callback = callback;
 };
 
 UploadHandler.prototype.post = function () {
@@ -330,7 +336,8 @@ UploadHandler.prototype.post = function () {
   form.on('fileBegin', function (name, file) {
     tmpFiles.push(file.path);
     var fileInfo = new FileInfo(file, handler.req, true);
-    fileInfo.safeName();
+
+    //fileInfo.safeName();
 
     // validate post
     var error = options.validateFile(file);
@@ -368,6 +375,10 @@ UploadHandler.prototype.post = function () {
 
     // we can store files in subdirectories
     var folder = options.getDirectory(fileInfo, this.formFields);
+
+    // make safe directory, disable all '.'
+    folder.replace(/\./g, '');
+
     // check if directory exists, if not, create all the directories
     var subFolders = folder.split('/');
     var currentFolder = options.uploadDir;
@@ -381,6 +392,10 @@ UploadHandler.prototype.post = function () {
 
     // possibly rename file if needed;
     var newFileName = options.getFileName(fileInfo, this.formFields);
+
+    // make safe file name
+    newFileName = getSafeName(currentFolder, newFileName);
+    console.log(currentFolder + "...." + newFileName);
 
     // set the file name
     fileInfo.name = newFileName;
@@ -469,8 +484,18 @@ var checkCreateDirectory = function (dir) {
   }
 }
 
+var getSafeName = function(directory, fileName) {
+	var n = fileName;
+	// Prevent directory traversal and creating hidden system files:
+	n = path.basename(n).replace(/^\.+/, '');
+	// Prevent overwriting existing files:
+	while (_existsSync(directory + '/' + n)) {
+		n = n.replace(nameCountRegexp, nameCountFunc);
+	}
+	return n;
+}
+
 // declare routes
 
 RoutePolicy.declare(options.uploadUrl, 'network');
 WebApp.connectHandlers.use(options.uploadUrl, UploadServer.serve);
-

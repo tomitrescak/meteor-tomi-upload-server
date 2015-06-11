@@ -17,6 +17,7 @@ var options = {
   uploadDir: null,
   uploadUrl: '/upload/',
   checkCreateDirectories: false,
+  overwrite: false,
   maxPostSize: 11000000000, // 11 GB
   minFileSize: 1,
   maxFileSize: 10000000000, // 10 GB
@@ -57,13 +58,24 @@ var options = {
           if (!fs.existsSync(currentFolder + '/' + version)) {
             fs.mkdirSync(currentFolder + '/' + version);
           }
-
-          imageMagick.resize({
-            width: opts.width,
-            height: opts.height,
-            srcPath: currentFolder + '/' + fileInfo.name,
-            dstPath: currentFolder + '/' + version + '/' + fileInfo.name
-          }, finish);
+          
+          if (opts.crop) {
+            imageMagick.crop({
+              width: opts.width,
+              height: opts.height,
+              gravity: opts.gravity || "Center",
+              srcPath: currentFolder + '/' + fileInfo.name,
+              dstPath: currentFolder + '/' + version + '/' + fileInfo.name
+            }, finish);
+          }else {
+            imageMagick.resize({
+              width: opts.width,
+              height: opts.height,
+              srcPath: currentFolder + '/' + fileInfo.name,
+              dstPath: currentFolder + '/' + version + '/' + fileInfo.name
+            }, finish);
+          }
+          
       });
     }
 
@@ -132,6 +144,9 @@ UploadServer = {
     if (options.checkCreateDirectories) {
       checkCreateDirectory(options.uploadDir);
     }
+    
+    if (opts.overwrite) options.overwrite = true
+    
 
     if (opts.maxPostSize != null) options.maxPostSize = opts.maxPostSize;
     if (opts.minFileSize != null) options.minFileSize = opts.minFileSize;
@@ -520,9 +535,12 @@ var getSafeName = function(directory, fileName) {
 	// Prevent directory traversal and creating hidden system files:
 	n = path.basename(n).replace(/^\.+/, '');
 	// Prevent overwriting existing files:
-	while (_existsSync(directory + '/' + n)) {
-		n = n.replace(nameCountRegexp, nameCountFunc);
-	}
+  if(!options.overwrite) {
+  	while (_existsSync(directory + '/' + n)) {
+  		n = n.replace(nameCountRegexp, nameCountFunc);
+  	}
+  }
+	
 	return n;
 }
 

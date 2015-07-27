@@ -353,7 +353,7 @@ FileInfo.prototype.safeName = function () {
 FileInfo.prototype.initUrls = function (req, form) {
   if (!this.error) {
     var that = this,
-      subDirectory = options.getDirectory(this.name, form.formFields),
+      subDirectory = options.getDirectory(this, form.formFields),
       baseUrl = (options.ssl ? 'https:' : 'http:') +
         '//' + req.headers.host + options.uploadUrl;
     this.url = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);

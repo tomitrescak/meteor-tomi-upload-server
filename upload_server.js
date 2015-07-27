@@ -112,6 +112,10 @@ var options = {
 
 
 UploadServer = {
+  getOptions: function()
+  {
+    return options;	
+  },
   init: function (opts) {
     if (opts.checkCreateDirectories != null) options.checkCreateDirectories = opts.checkCreateDirectories;
 

@@ -400,7 +400,14 @@ UploadHandler.prototype.post = function () {
     fileInfo.name = newFileName;
     fileInfo.path = folder + "/" + newFileName;
 
-    fs.renameSync(file.path, currentFolder + "/" + newFileName);
+    // move the file (support moving to different partitions)
+    var destinationFile = currentFolder + "/" + newFileName;
+    var is = fs.createReadStream(file.path);
+	var os = fs.createWriteStream(destinationFile);
+	is.pipe(os);
+	is.on('end',function() {
+    	fs.unlinkSync(file.path);
+	});
 
     if (options.imageTypes.test(fileInfo.name)) {
       Object.keys(options.imageVersions).forEach(function (version) {

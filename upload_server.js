@@ -400,14 +400,23 @@ UploadHandler.prototype.post = function () {
     fileInfo.name = newFileName;
     fileInfo.path = folder + "/" + newFileName;
 
-    // move the file (support moving to different partitions)
+    // Move the file to the final destination
     var destinationFile = currentFolder + "/" + newFileName;
-    var is = fs.createReadStream(file.path);
-	var os = fs.createWriteStream(destinationFile);
-	is.pipe(os);
-	is.on('end',function() {
-    	fs.unlinkSync(file.path);
-	});
+    try 
+    {
+     	// Try moving through renameSync
+       	fs.renameSync(file.path, destinationFile)
+    }
+    catch(exception)
+    {
+    	// if moving failed, try a copy + delete instead, this to support moving work between partitions
+    	var is = fs.createReadStream(file.path);
+		var os = fs.createWriteStream(destinationFile);
+		is.pipe(os);
+		is.on('end',function() {
+    		fs.unlinkSync(file.path);
+		});
+    }
 
     if (options.imageTypes.test(fileInfo.name)) {
       Object.keys(options.imageVersions).forEach(function (version) {

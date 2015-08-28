@@ -77,7 +77,7 @@ var options = {
 UploadServer = {
   getOptions: function()
   {
-    return options;	
+    return options;
   },
   init: function (opts) {
     if (opts.checkCreateDirectories != null) options.checkCreateDirectories = opts.checkCreateDirectories;
@@ -88,7 +88,7 @@ UploadServer = {
       options.tmpDir = opts.tmpDir;
     }
 
-    if (opts.cacheTime) {
+    if (opts.cacheTime != null) {
       options.cacheTime = opts.cacheTime;
     }
 
@@ -265,11 +265,15 @@ var nameCountFunc = function (s, index, ext) {
 /**
  * @class FileInfo Manages paths for uploaded objects
  */
-var FileInfo = function (file) {
+var FileInfo = function (file, req, form) {
   this.name = file.name;
   this.path = file.name;
   this.size = file.size;
   this.type = file.type;
+
+  this.subDirectory = options.getDirectory(this, form.formFields);
+  this.baseUrl = (options.ssl ? 'https:' : 'http:') + '//' + req.headers.host + options.uploadUrl;
+  this.url = this.baseUrl + (this.subDirectory ? (this.subDirectory + '/') : '') + encodeURIComponent(this.name);
 };
 
 FileInfo.prototype.validate = function () {
@@ -295,18 +299,12 @@ FileInfo.prototype.safeName = function () {
 
 FileInfo.prototype.initUrls = function (req, form) {
   if (!this.error) {
-    var that = this,
-      subDirectory = options.getDirectory(this, form.formFields),
-      baseUrl = (options.ssl ? 'https:' : 'http:') +
-        '//' + req.headers.host + options.uploadUrl;
-    this.url = baseUrl + (subDirectory ? (subDirectory + '/') : '') + encodeURIComponent(this.name);
-
     // image
     Object.keys(options.imageVersions).forEach(function (version) {
       if (_existsSync(
           options.uploadDir + '/' + version + '/' + that.name
         )) {
-        that[version + 'Url'] = baseUrl + version + '/' +
+        that[version + 'Url'] = that.baseUrl + version + '/' +
         encodeURIComponent(that.name);
       }
     });
@@ -339,7 +337,7 @@ UploadHandler.prototype.post = function () {
   form.uploadDir = options.tmpDir;
   form.on('fileBegin', function (name, file) {
     tmpFiles.push(file.path);
-    var fileInfo = new FileInfo(file, handler.req, true);
+    var fileInfo = new FileInfo(file, handler.req, form);
 
     //fileInfo.safeName();
 
@@ -406,7 +404,7 @@ UploadHandler.prototype.post = function () {
 
     // Move the file to the final destination
     var destinationFile = currentFolder + "/" + newFileName;
-    try 
+    try
     {
      	// Try moving through renameSync
        	fs.renameSync(file.path, destinationFile)

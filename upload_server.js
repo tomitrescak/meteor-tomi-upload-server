@@ -31,6 +31,7 @@ var options = {
       height: 200
     }
   },
+  overwrite: false,
   cacheTime: 86400,
   getDirectory: function (fileInfo, formData) {
     return ""
@@ -122,6 +123,7 @@ UploadServer = {
     if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
     if (opts.finished != null) options.finished = opts.finished;
+    if (opts.overwrite != null) options.overwrite = opts.overwrite;
 
     if (opts.uploadUrl) options.uploadUrl = opts.uploadUrl;
 
@@ -288,18 +290,19 @@ FileInfo.prototype.validate = function () {
   return this.error;
 };
 
-FileInfo.prototype.safeName = function () {
-  // Prevent directory traversal and creating hidden system files:
-  this.name = path.basename(this.name).replace(/^\.+/, '');
-  // Prevent overwriting existing files:
-  while (_existsSync(options.uploadDir + '/' + this.name)) {
-    this.name = this.name.replace(nameCountRegexp, nameCountFunc);
-  }
-};
+// FileInfo.prototype.safeName = function () {
+//   // Prevent directory traversal and creating hidden system files:
+//   this.name = path.basename(this.name).replace(/^\.+/, '');
+//   // Prevent overwriting existing files:
+//   while (_existsSync(options.uploadDir + '/' + this.name)) {
+//     this.name = this.name.replace(nameCountRegexp, nameCountFunc);
+//   }
+// };
 
 FileInfo.prototype.initUrls = function (req, form) {
   if (!this.error) {
     // image
+    var that = this;
     Object.keys(options.imageVersions).forEach(function (version) {
       if (_existsSync(
           options.uploadDir + '/' + version + '/' + that.name
@@ -506,9 +509,11 @@ var getSafeName = function(directory, fileName) {
 	// Prevent directory traversal and creating hidden system files:
 	n = path.basename(n).replace(/^\.+/, '');
 	// Prevent overwriting existing files:
-	while (_existsSync(directory + '/' + n)) {
-		n = n.replace(nameCountRegexp, nameCountFunc);
-	}
+	if (!options.overwrite) {
+  	while (_existsSync(directory + '/' + n)) {
+  		n = n.replace(nameCountRegexp, nameCountFunc);
+  	}
+  }
 	return n;
 }
 

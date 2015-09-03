@@ -402,6 +402,7 @@ UploadHandler.prototype.post = function () {
     newFileName = getSafeName(currentFolder, newFileName);
 
     // set the file name
+    var origFileName = fileinfo.name;
     fileInfo.name = newFileName;
     fileInfo.path = folder + "/" + newFileName;
 
@@ -423,7 +424,8 @@ UploadHandler.prototype.post = function () {
 		});
     }
 
-    if (options.imageTypes.test(fileInfo.name)) {
+    // test against original filename
+    if (options.imageTypes.test(origFileName)) {
       Object.keys(options.imageVersions).forEach(function (version) {
         counter += 1;
         var opts = options.imageVersions[version];

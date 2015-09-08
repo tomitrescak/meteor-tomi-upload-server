@@ -489,7 +489,7 @@ var checkCreateDirectory = function (dir) {
   
   // If we're on Windows we'll remove the drive letter
   if(/^win/.test(process.platform)) {
-  	var drive = path.replace(/([A-Z]:[\\\/]).*?/gi, '')
+  	dir = dir.replace(/([A-Z]:[\\\/]).*?/gi, '')
   }
 
   var dirParts = dir.split('/');

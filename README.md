@@ -4,7 +4,8 @@ For the full documentation and instructions on use go to [https://github.com/tom
 
 ####Version Info
 
-* 1.3.X - Documentation is maintained [here]((https://github.com/tomitrescak/meteor-uploads)): 
+* 1.3.1 - Now with windows support (thanks to onbjerg)
+* 1.3.X - Documentation is maintained [here]((https://github.com/tomitrescak/meteor-uploads)):
 * 1.2.4 - Removed bug that was not detecting safe file names
 * 1.2.0 - Improved serving of files. Now with correct headers. Replaced static middleware.
 * 1.1.1 - Removed bug when getFileName was not specified

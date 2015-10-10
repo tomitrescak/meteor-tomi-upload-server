@@ -1,6 +1,7 @@
 var formidable = Npm.require('formidable');
 var http = Npm.require('http');
 var sys = Npm.require('sys');
+
 //var connect = Npm.require('connect');
 var url = Npm.require('url');
 var path = Npm.require('path');
@@ -26,10 +27,10 @@ var options = {
   inlineFileTypes: /\.(gif|jpe?g|png)$/i,
   imageTypes: /\.(gif|jpe?g|png)$/i,
   imageVersions: {
-    'thumbnail': {
+    thumbnail: {
       width: 200,
-      height: 200
-    }
+      height: 200,
+    },
   },
   overwrite: false,
   cacheTime: 86400,
@@ -433,12 +434,20 @@ UploadHandler.prototype.post = function () {
           fs.mkdirSync(currentFolder + '/' + version);
         }
 
-        imageMagick.resize({
-          width: opts.width,
-          height: opts.height,
+        var ioptions = {
           srcPath: currentFolder + '/' + newFileName,
           dstPath: currentFolder + '/' + version + '/' + newFileName
-        }, finish);
+        };
+
+        if (opts.width) {
+          ioptions.width = opts.width;
+        }
+
+        if (opts.height) {
+          ioptions.height = opts.height;
+        }
+
+        imageMagick.resize(ioptions, finish);
       });
     }
 
@@ -486,7 +495,7 @@ var checkCreateDirectory = function (dir) {
   if (!dir) {
     return;
   }
-  
+
   // If we're on Windows we'll remove the drive letter
   if(/^win/.test(process.platform)) {
   	dir = dir.replace(/([A-Z]:[\\\/]).*?/gi, '')

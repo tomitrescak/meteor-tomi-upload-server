@@ -1,5 +1,7 @@
 This is a server interface package for the [Meteor Uploads](https://github.com/tomitrescak/meteor-uploads)
 
+[![Meteor Icon](http://icon.meteor.com/package/tomi:upload-server)](https://atmospherejs.com/tomi/upload-server)
+
 For the full documentation and instructions on use go to [https://github.com/tomitrescak/meteor-uploads](https://github.com/tomitrescak/meteor-uploads).
 
 ####Version Info

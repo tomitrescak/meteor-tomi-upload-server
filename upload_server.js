@@ -134,9 +134,11 @@ UploadServer = {
     // make sure paths are correct
     
     // unlink all thumbnails first
-    var subFolders = Object.keys(options.imageVersions);
-    for(var i=0; i<subFolders.length; i++) {
-     fs.unlinkSync(path.join(options.uploadDir, subFolders[i], filePath));
+    if (options.imageVersions) {
+    	var subFolders = Object.keys(options.imageVersions);
+	for(var i=0; i<subFolders.length; i++) {
+	    fs.unlinkSync(path.join(options.uploadDir, subFolders[i], filePath));
+	}
     }
     fs.unlinkSync(path.join(options.uploadDir, filePath));
   },

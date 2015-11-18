@@ -110,6 +110,10 @@ UploadServer = {
       options.uploadDir = opts.uploadDir;
     }
 
+    if (opts.uploadUrl) {
+      options.uploadUrl = opts.uploadUrl;
+    }
+
     if (options.checkCreateDirectories) {
       checkCreateDirectory(options.uploadDir);
     }
@@ -130,6 +134,13 @@ UploadServer = {
 
     if (opts.imageVersions != null) options.imageVersions = opts.imageVersions
     else options.imageVersions = [];
+
+    if (options.uploadUrl != "/upload/") {
+      console.log("Custom upload url setup to: " + options.uploadUrl);
+    }
+
+    RoutePolicy.declare(options.uploadUrl, 'network');
+    WebApp.connectHandlers.use(options.uploadUrl, UploadServer.serve);
   },
   delete: function (filePath) {
 
@@ -189,9 +200,9 @@ UploadServer = {
 
     // validate the request
     var error = options.validateRequest(req, res);
-    if (error) {
+    if (error == false || (error != true && error != null)) {
       res.writeHead(403, {'Content-Type': 'text/plain'});
-      res.write(error);
+      res.write(error.toString());
       res.end();
       return;
     }
@@ -342,17 +353,7 @@ UploadHandler.prototype.post = function () {
   form.on('fileBegin', function (name, file) {
     tmpFiles.push(file.path);
     var fileInfo = new FileInfo(file, handler.req, form);
-
     //fileInfo.safeName();
-
-    // validate post
-    var error = options.validateFile(file);
-    if (error) {
-      res.writeHead(403, {'Content-Type': 'text/plain'});
-      res.write(error);
-      res.end();
-      return;
-    }
 
     map[path.basename(file.path)] = fileInfo;
     files.push(fileInfo);
@@ -370,7 +371,18 @@ UploadHandler.prototype.post = function () {
     var fileInfo = map[path.basename(file.path)];
     fileInfo.size = file.size;
 
-    var error = fileInfo.validate();
+    // custom validation
+    var error = options.validateFile(file, handler.req);
+    if (error == false || (error != true && error != null)) {
+      handler.res.writeHead(403, {'Content-Type': 'text/plain'});
+      handler.res.write(error == false ? "validationFailed" : error);
+      handler.res.end();
+      fs.unlinkSync(file.path);
+      return;
+    }
+
+    // fileinfo validation
+    error = fileInfo.validate();
     if (error) {
       // delete file
       fs.unlinkSync(file.path);
@@ -530,8 +542,3 @@ var getSafeName = function(directory, fileName) {
   }
 	return n;
 }
-
-// declare routes
-
-RoutePolicy.declare(options.uploadUrl, 'network');
-WebApp.connectHandlers.use(options.uploadUrl, UploadServer.serve);

@@ -9,7 +9,7 @@ var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
 
 var _existsSync = fs.existsSync || path.existsSync;
-var imageMagick = Npm.require('imagemagick');
+var imageMagick = Npm.require('gm');
 
 var options = {
   /** @type String*/
@@ -143,8 +143,15 @@ UploadServer = {
     WebApp.connectHandlers.use(options.uploadUrl, UploadServer.serve);
   },
   delete: function (filePath) {
-
     // make sure paths are correct
+    
+    // unlink all thumbnails first
+    if (options.imageVersions) {
+    	var subFolders = Object.keys(options.imageVersions);
+	for(var i=0; i<subFolders.length; i++) {
+	    fs.unlinkSync(path.join(options.uploadDir, subFolders[i], filePath));
+	}
+    }
     fs.unlinkSync(path.join(options.uploadDir, filePath));
   },
   serve: function (req, res) {

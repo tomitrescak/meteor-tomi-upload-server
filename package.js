@@ -26,6 +26,6 @@ Package.onUse(function(api) {
 
 Npm.depends({
   formidable: '1.0.15',
-  imagemagick: '0.1.3',
+  gm: '1.21.1',
   connect: '2.7.10'
 })

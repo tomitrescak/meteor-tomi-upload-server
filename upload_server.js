@@ -8,7 +8,7 @@ var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
 
 var _existsSync = fs.existsSync || path.existsSync;
-var imageMagick = Npm.require('imagemagick');
+var imageMagick = Npm.require('gm');
 
 var options = {
   /** @type String*/

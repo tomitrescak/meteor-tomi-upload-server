@@ -340,7 +340,8 @@ UploadHandler.prototype.post = function () {
     map = {},
     counter = 1,
     redirect,
-    finish = function () {
+    finish = function (err) {
+      if (err) throw err;
       counter -= 1;
       if (!counter) {
         files.forEach(function (fileInfo) {

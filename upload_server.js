@@ -340,7 +340,8 @@ UploadHandler.prototype.post = function () {
     map = {},
     counter = 1,
     redirect,
-    finish = function () {
+    finish = function (err, stdout) {
+			if (err) throw err;
       counter -= 1;
       if (!counter) {
         files.forEach(function (fileInfo) {
@@ -400,6 +401,7 @@ UploadHandler.prototype.post = function () {
     // check if directory exists, if not, create all the directories
     var subFolders = folder.split('/');
     var currentFolder = options.uploadDir;
+
     for (var i = 0; i < subFolders.length; i++) {
       currentFolder += '/' + subFolders[i];
 
@@ -418,12 +420,42 @@ UploadHandler.prototype.post = function () {
     fileInfo.name = newFileName;
     fileInfo.path = folder + "/" + newFileName;
 
+		var imageVersionsFunc = function() {
+			if (options.imageTypes.test(fileInfo.name)) {
+	      Object.keys(options.imageVersions).forEach(function (version) {
+	        counter += 1;
+	        var opts = options.imageVersions[version];
+
+	        // check if version directory exists
+	        if (!fs.existsSync(currentFolder + version)) {
+	          fs.mkdirSync(currentFolder + version);
+	        }
+
+	        var ioptions = {
+	          srcPath: currentFolder + newFileName,
+	          dstPath: currentFolder + version + '/' + newFileName
+	        };
+
+	        if (opts.width) {
+	          ioptions.width = opts.width;
+	        }
+
+	        if (opts.height) {
+	          ioptions.height = opts.height;
+	        }
+
+	        imageMagick.resize(ioptions, finish);
+	      });
+	    }
+		};
+
     // Move the file to the final destination
-    var destinationFile = currentFolder + "/" + newFileName;
+    var destinationFile = currentFolder + newFileName;
     try
     {
      	// Try moving through renameSync
-       	fs.renameSync(file.path, destinationFile)
+       	fs.renameSync(file.path, destinationFile);
+				imageVersionsFunc();
     }
     catch(exception)
     {
@@ -433,34 +465,8 @@ UploadHandler.prototype.post = function () {
 		is.pipe(os);
 		is.on('end',function() {
     		fs.unlinkSync(file.path);
+				imageVersionsFunc();
 		});
-    }
-
-    if (options.imageTypes.test(fileInfo.name)) {
-      Object.keys(options.imageVersions).forEach(function (version) {
-        counter += 1;
-        var opts = options.imageVersions[version];
-
-        // check if version directory exists
-        if (!fs.existsSync(currentFolder + '/' + version)) {
-          fs.mkdirSync(currentFolder + '/' + version);
-        }
-
-        var ioptions = {
-          srcPath: currentFolder + '/' + newFileName,
-          dstPath: currentFolder + '/' + version + '/' + newFileName
-        };
-
-        if (opts.width) {
-          ioptions.width = opts.width;
-        }
-
-        if (opts.height) {
-          ioptions.height = opts.height;
-        }
-
-        imageMagick.resize(ioptions, finish);
-      });
     }
 
     // call the feedback within its own fiber

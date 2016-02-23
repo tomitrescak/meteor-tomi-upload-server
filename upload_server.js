@@ -146,6 +146,14 @@ UploadServer = {
 
     // make sure paths are correct
     fs.unlinkSync(path.join(options.uploadDir, filePath));
+    
+    // unlink all imageVersions also
+    if (options.imageVersions) {
+    	var subFolders = Object.keys(options.imageVersions);
+ 	for(var i=0; i<subFolders.length; i++) {
+	    fs.unlinkSync(path.join(options.uploadDir, subFolders[i], filePath));
+ 	}
+    }
   },
   serve: function (req, res) {
     if (options.tmpDir == null || options.uploadDir == null) {

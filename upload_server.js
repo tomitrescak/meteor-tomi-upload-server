@@ -32,6 +32,7 @@ var options = {
       height: 200,
     },
   },
+  crop: false,
   overwrite: false,
   cacheTime: 86400,
   getDirectory: function (fileInfo, formData) {
@@ -123,6 +124,7 @@ UploadServer = {
     if (opts.maxFileSize != null) options.maxFileSize = opts.maxFileSize;
     if (opts.acceptFileTypes != null) options.acceptFileTypes = opts.acceptFileTypes;
     if (opts.imageTypes != null) options.imageTypes = opts.imageTypes;
+    if (opts.crop != null) options.crop = opts.crop;
     if (opts.validateRequest != null) options.validateRequest = opts.validateRequest;
     if (opts.validateFile != null) options.validateFile = opts.validateFile;
     if (opts.getDirectory != null) options.getDirectory = opts.getDirectory;
@@ -452,7 +454,13 @@ UploadHandler.prototype.post = function () {
 	          ioptions.height = opts.height;
 	        }
 
-	        imageMagick.resize(ioptions, finish);
+            if (options.crop) {
+              ioptions.quality = 1;
+              ioptions.gravity = 'Center';
+              imageMagick.crop(ioptions, finish);
+            } else {
+              imageMagick.resize(ioptions, finish);
+            }
 	      });
 	    }
 		};

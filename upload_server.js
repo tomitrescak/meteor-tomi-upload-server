@@ -35,10 +35,10 @@ var options = {
   crop: false,
   overwrite: false,
   cacheTime: 86400,
-  getDirectory: function (fileInfo, formData) {
+  getDirectory: function (req, fileInfo, formData) {
     return ""
   },
-  getFileName: function (fileInfo, formData) {
+  getFileName: function (req, fileInfo, formData) {
     return fileInfo.name;
   },
   finished: function () {
@@ -148,7 +148,7 @@ UploadServer = {
 
     // make sure paths are correct
     fs.unlinkSync(path.join(options.uploadDir, filePath));
-    
+
     // unlink all imageVersions also
     if (options.imageVersions) {
     	var subFolders = Object.keys(options.imageVersions);
@@ -295,7 +295,7 @@ var FileInfo = function (file, req, form) {
   this.size = file.size;
   this.type = file.type;
 
-  this.subDirectory = options.getDirectory(this, form.formFields);
+  this.subDirectory = options.getDirectory(req, this, form.formFields);
   this.baseUrl = (options.ssl ? 'https:' : 'http:') + '//' + req.headers.host + options.uploadUrl;
   this.url = this.baseUrl + (this.subDirectory ? (this.subDirectory + '/') : '') + encodeURIComponent(this.name);
 };
@@ -403,7 +403,7 @@ UploadHandler.prototype.post = function () {
     }
 
     // we can store files in subdirectories
-    var folder = options.getDirectory(fileInfo, this.formFields);
+    var folder = options.getDirectory(handler.req, fileInfo, this.formFields);
 
     // make safe directory, disable all '.'
     folder.replace(/\./g, '');
@@ -421,7 +421,7 @@ UploadHandler.prototype.post = function () {
     }
 
     // possibly rename file if needed;
-    var newFileName = options.getFileName(fileInfo, this.formFields);
+    var newFileName = options.getFileName(handler.req, fileInfo, this.formFields);
 
     // make safe file name
     newFileName = getSafeName(currentFolder, newFileName);

@@ -466,23 +466,21 @@ UploadHandler.prototype.post = function () {
 		};
 
     // Move the file to the final destination
-    var destinationFile = currentFolder + newFileName;
-    try
-    {
+    var destinationFile = path.join(currentFolder, newFileName);
+
+    try {
      	// Try moving through renameSync
        	fs.renameSync(file.path, destinationFile);
 				imageVersionsFunc();
-    }
-    catch(exception)
-    {
+    } catch(exception) {
     	// if moving failed, try a copy + delete instead, this to support moving work between partitions
     	var is = fs.createReadStream(file.path);
-		var os = fs.createWriteStream(destinationFile);
-		is.pipe(os);
-		is.on('end',function() {
-    		fs.unlinkSync(file.path);
-				imageVersionsFunc();
-		});
+  		var os = fs.createWriteStream(destinationFile);
+  		is.pipe(os);
+  		is.on('end',function() {
+      		fs.unlinkSync(file.path);
+  				imageVersionsFunc();
+  		});
     }
 
     // call the feedback within its own fiber

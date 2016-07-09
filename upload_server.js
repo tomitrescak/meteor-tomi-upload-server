@@ -296,7 +296,8 @@ var FileInfo = function (file, req, form) {
   this.type = file.type;
 
   this.subDirectory = options.getDirectory(this, form.formFields);
-  this.baseUrl = (options.ssl ? 'https:' : 'http:') + '//' + req.headers.host + options.uploadUrl;
+  var ssl = req.headers.host.indexOf('localhost') > -1 || req.headers.host.indexOf('192.168.') > -1 ? false : true;
+  this.baseUrl = (ssl ? 'https:' : 'http:') + '//' + req.headers.host + options.uploadUrl;
   this.url = this.baseUrl + (this.subDirectory ? (this.subDirectory) : '') + encodeURIComponent(this.name);
 };
 

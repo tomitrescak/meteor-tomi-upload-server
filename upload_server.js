@@ -297,7 +297,7 @@ var FileInfo = function (file, req, form) {
 
   this.subDirectory = options.getDirectory(this, form.formFields);
   this.baseUrl = (options.ssl ? 'https:' : 'http:') + '//' + req.headers.host + options.uploadUrl;
-  this.url = this.baseUrl + (this.subDirectory ? (this.subDirectory + '/') : '') + encodeURIComponent(this.name);
+  this.url = this.baseUrl + (this.subDirectory ? (this.subDirectory) : '') + encodeURIComponent(this.name);
 };
 
 FileInfo.prototype.validate = function () {
@@ -428,7 +428,7 @@ UploadHandler.prototype.post = function () {
 
     // set the file name
     fileInfo.name = newFileName;
-    fileInfo.path = folder + "/" + newFileName;
+    fileInfo.path = folder + newFileName;
 
 		var imageVersionsFunc = function() {
 			if (options.imageTypes.test(fileInfo.name)) {
@@ -467,6 +467,7 @@ UploadHandler.prototype.post = function () {
 
     // Move the file to the final destination
     var destinationFile = currentFolder + newFileName;
+
     try
     {
      	// Try moving through renameSync

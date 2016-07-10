@@ -148,7 +148,7 @@ UploadServer = {
 
     // make sure paths are correct
     fs.unlinkSync(path.join(options.uploadDir, filePath));
-    
+
     // unlink all imageVersions also
     if (options.imageVersions) {
     	var subFolders = Object.keys(options.imageVersions);
@@ -428,7 +428,7 @@ UploadHandler.prototype.post = function () {
 
     // set the file name
     fileInfo.name = newFileName;
-    fileInfo.path = folder + "/" + newFileName;
+    fileInfo.path = path.join(folder, newFileName);
 
 		var imageVersionsFunc = function() {
 			if (options.imageTypes.test(fileInfo.name)) {

@@ -7,7 +7,6 @@ var url = Npm.require('url');
 var path = Npm.require('path');
 var fs = Npm.require('fs');
 var Fiber = Npm.require('fibers');
-var imageWatermark = Npm.require('image-watermark');
 var _existsSync = fs.existsSync || path.existsSync;
 var imageMagick = Npm.require('imagemagick');
 var gm = Npm.require('gm').subClass({imageMagick: true});
@@ -360,8 +359,6 @@ UploadHandler.prototype.post = function () {
 			files.forEach(function (fileInfo) {
 				fileInfo.initUrls(handler.req, form);
 			});
-			console.log("finesh");
-			console.log(files);
 			handler.callback({files: files}, redirect);
 		}
 	};

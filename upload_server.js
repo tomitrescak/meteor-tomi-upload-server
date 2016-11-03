@@ -466,7 +466,7 @@ UploadHandler.prototype.post = function () {
 		};
 
     // Move the file to the final destination
-    var destinationFile = currentFolder + newFileName;
+    var destinationFile = currentFolder + '/' + newFileName;
     try
     {
      	// Try moving through renameSync

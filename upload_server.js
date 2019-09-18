@@ -226,7 +226,7 @@ UploadServer = {
         setNoCacheHeaders();
 
         var uri = url.parse(req.url).pathname;
-        var filename = path.join(options.uploadDir, unescape(uri));
+        var filename = path.join(options.uploadDir, decodeURIComponent(uri));
         var stats;
 
         try {

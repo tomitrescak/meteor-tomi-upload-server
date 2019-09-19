@@ -67,7 +67,8 @@ var options = {
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "zip": "application/zip, application/x-compressed-zip",
     "txt": "text/plain"
-  }
+  },
+  notFoundImage: null
   /* Uncomment and edit this section to provide the service via HTTPS:
    ssl: {
    key: fs.readFileSync('/Applications/XAMPP/etc/ssl.key/server.key'),
@@ -131,6 +132,7 @@ UploadServer = {
     if (opts.getFileName != null) options.getFileName = opts.getFileName;
     if (opts.finished != null) options.finished = opts.finished;
     if (opts.overwrite != null) options.overwrite = opts.overwrite;
+    if (opts.notFoundImage != null) options.notFoundImage = opts.notFoundImage;
 
     if (opts.uploadUrl) options.uploadUrl = opts.uploadUrl;
 
@@ -232,10 +234,15 @@ UploadServer = {
         try {
           stats = fs.lstatSync(filename); // throws if path doesn't exist
         } catch (e) {
-          res.writeHead(404, {'Content-Type': 'text/plain'});
-          res.write('404 Not Found\n');
-          res.end();
-          return;
+            try {
+              filename = path.join(options.uploadDir, unescape(options.notFoundImage));
+              stats = fs.lstatSync(filename); // throws if path doesn't exist
+            } catch (e) {
+              res.writeHead(404, {'Content-Type': 'text/plain'});
+              res.write('404 Not Found\n');
+              res.end();
+              return;
+            }
         }
 
         if (stats.isFile()) {
